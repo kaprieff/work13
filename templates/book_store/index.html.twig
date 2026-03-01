@@ -1,0 +1,72 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Книжный магазин{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <h1>📚 Книжный магазин</h1>
+    <p class="lead">Система управления заказами</p>
+    
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">1. Покупатели и количество заказов</h5>
+                    <p class="card-text">Кто постоянный покупатель, а кто случайный</p>
+                    <a href="{{ path('people_buy_count') }}" class="btn btn-primary">Показать</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">2. Заказы с общей суммой</h5>
+                    <p class="card-text">Сколько денег потрачено в каждом заказе</p>
+                    <a href="{{ path('orders_with_total') }}" class="btn btn-primary">Показать</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">3. Топ-3 лучших клиента</h5>
+                    <p class="card-text">Кто больше всех денег оставил</p>
+                    <a href="{{ path('top_3_customers') }}" class="btn btn-primary">Показать</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">4. Средняя сумма покупки</h5>
+                    <p class="card-text">На какую сумму в среднем покупают</p>
+                    <a href="{{ path('average_purchase') }}" class="btn btn-primary">Показать</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">5. Самая дорогая книга</h5>
+                    <p class="card-text">Что нужно рекламировать</p>
+                    <a href="{{ path('most_expensive_book') }}" class="btn btn-primary">Показать</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card mb-3 bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">📝 Добавить тестовые данные</h5>
+                    <p class="card-text">Добавить людей, книги и заказы</p>
+                    <a href="{{ path('add_test_data') }}" class="btn btn-light">Добавить</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

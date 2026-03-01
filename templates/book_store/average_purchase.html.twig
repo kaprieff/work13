@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Средняя покупка{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <h1>📊 Средняя сумма покупки</h1>
+    <a href="{{ path('app_home') }}" class="btn btn-secondary mb-3">← На главную</a>
+    
+    <div class="alert alert-info mt-4">
+        <h3>В среднем люди покупают на:</h3>
+        <h1 class="display-4"><strong>{{ average|round }} руб.</strong></h1>
+        
+        {% if average < 1000 %}
+            <p class="mt-3">Это меньше 1000 рублей - нужно повышать средний чек!</p>
+        {% elseif average < 3000 %}
+            <p class="mt-3">Хороший средний чек - около 3000 рублей</p>
+        {% else %}
+            <p class="mt-3">Отличный результат! Люди покупают много!</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

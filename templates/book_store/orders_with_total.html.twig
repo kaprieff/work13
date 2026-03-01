@@ -1,0 +1,33 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Заказы с суммой{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <h1>📦 Заказы с общей суммой</h1>
+    <a href="{{ path('app_home') }}" class="btn btn-secondary mb-3">← На главную</a>
+    
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>№ Заказа</th>
+                <th>Дата</th>
+                <th>Покупатель</th>
+                <th>Книги</th>
+                <th>Общая сумма</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td>{{ order.order_id }}</td>
+                <td>{{ order.created_at|date('d.m.Y H:i') }}</td>
+                <td>{{ order.buyer_name }}</td>
+                <td>{{ order.books_list }}</td>
+                <td><strong>{{ order.total_amount }} руб.</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

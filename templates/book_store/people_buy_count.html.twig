@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Покупатели и заказы{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <h1>👥 Покупатели и количество заказов</h1>
+    <a href="{{ path('app_home') }}" class="btn btn-secondary mb-3">← На главную</a>
+    
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Имя</th>
+                <th>Email</th>
+                <th>Количество заказов</th>
+                <th>Статус</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for person in people %}
+            <tr>
+                <td>{{ person.name }}</td>
+                <td>{{ person.email }}</td>
+                <td>{{ person.order_count }}</td>
+                <td>
+                    {% if person.order_count > 2 %}
+                        <span class="badge bg-success">Постоянный</span>
+                    {% elseif person.order_count == 1 %}
+                        <span class="badge bg-warning">Случайный</span>
+                    {% else %}
+                        <span class="badge bg-info">Редкий</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

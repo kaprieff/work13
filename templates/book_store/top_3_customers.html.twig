@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Топ-3 клиента{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <h1>🏆 Топ-3 самых лучших клиента</h1>
+    <a href="{{ path('app_home') }}" class="btn btn-secondary mb-3">← На главную</a>
+    
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Место</th>
+                <th>Имя</th>
+                <th>Email</th>
+                <th>Всего заказов</th>
+                <th>Всего потрачено</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for customer in top_customers %}
+            <tr>
+                <td>
+                    {% if loop.index == 1 %}🥇
+                    {% elseif loop.index == 2 %}🥈
+                    {% else %}🥉{% endif %}
+                    {{ loop.index }}
+                </td>
+                <td>{{ customer.name }}</td>
+                <td>{{ customer.email }}</td>
+                <td>{{ customer.total_orders }}</td>
+                <td><strong>{{ customer.total_spent }} руб.</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
