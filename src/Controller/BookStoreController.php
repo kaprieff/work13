@@ -23,22 +23,15 @@ class BookStoreController extends AbstractController
     #[Route('/people-buy-count', name: 'people_buy_count')]
     public function peopleBuyCount(EntityManagerInterface $em): Response
     {
-        $conn = $em->getConnection();
+        $qb = $em->createQueryBuilder();
         
-        $sql = "
-            SELECT 
-                p.name,
-                p.email,
-                COUNT(co.id) as order_count
-            FROM people p
-            LEFT JOIN customer_order co ON p.id = co.buyer_id
-            GROUP BY p.id, p.name, p.email
-            ORDER BY order_count DESC
-        ";
+        $qb->select('p.name', 'p.email', 'COUNT(co.id) as order_count')
+           ->from('App\Entity\People', 'p')
+           ->leftJoin('p.orders', 'co')
+           ->groupBy('p.id')
+           ->orderBy('order_count', 'DESC');
         
-        $stmt = $conn->prepare($sql);
-        $result = $stmt->executeQuery();
-        $people = $result->fetchAllAssociative();
+        $people = $qb->getQuery()->getResult();
         
         return $this->render('book_store/people_buy_count.html.twig', [
             'people' => $people
@@ -48,26 +41,33 @@ class BookStoreController extends AbstractController
     #[Route('/orders-with-total', name: 'orders_with_total')]
     public function ordersWithTotal(EntityManagerInterface $em): Response
     {
-        $conn = $em->getConnection();
+        $orders = [];
         
-        $sql = "
-            SELECT 
-                co.id as order_id,
-                co.created_at,
-                p.name as buyer_name,
-                GROUP_CONCAT(b.title SEPARATOR ', ') as books_list,
-                SUM(b.price) as total_amount
-            FROM customer_order co
-            JOIN people p ON co.buyer_id = p.id
-            JOIN customer_order_book cob ON co.id = cob.customer_order_id
-            JOIN book b ON cob.book_id = b.id
-            GROUP BY co.id, co.created_at, p.name
-            ORDER BY co.created_at DESC
-        ";
+        $qb = $em->createQueryBuilder();
+        $qb->select('co')
+           ->from('App\Entity\CustomerOrder', 'co')
+           ->join('co.buyer', 'p')
+           ->orderBy('co.createdAt', 'DESC');
         
-        $stmt = $conn->prepare($sql);
-        $result = $stmt->executeQuery();
-        $orders = $result->fetchAllAssociative();
+        $customerOrders = $qb->getQuery()->getResult();
+        
+        foreach ($customerOrders as $co) {
+            $booksList = [];
+            $totalAmount = 0;
+            
+            foreach ($co->getBooks() as $book) {
+                $booksList[] = $book->getTitle();
+                $totalAmount += $book->getPrice();
+            }
+            
+            $orders[] = [
+                'order_id' => $co->getId(),
+                'created_at' => $co->getCreatedAt(),
+                'buyer_name' => $co->getBuyer()->getName(),
+                'books_list' => implode(', ', $booksList),
+                'total_amount' => $totalAmount
+            ];
+        }
         
         return $this->render('book_store/orders_with_total.html.twig', [
             'orders' => $orders
@@ -77,26 +77,18 @@ class BookStoreController extends AbstractController
     #[Route('/top-3-customers', name: 'top_3_customers')]
     public function top3Customers(EntityManagerInterface $em): Response
     {
-        $conn = $em->getConnection();
+        $qb = $em->createQueryBuilder();
         
-        $sql = "
-            SELECT 
-                p.name,
-                p.email,
-                COUNT(DISTINCT co.id) as total_orders,
-                SUM(b.price) as total_spent
-            FROM people p
-            JOIN customer_order co ON p.id = co.buyer_id
-            JOIN customer_order_book cob ON co.id = cob.customer_order_id
-            JOIN book b ON cob.book_id = b.id
-            GROUP BY p.id, p.name, p.email
-            ORDER BY total_spent DESC
-            LIMIT 3
-        ";
+        $qb->select('p.name', 'p.email', 'COUNT(DISTINCT co.id) as total_orders')
+           ->addSelect('SUM(b.price) as total_spent')
+           ->from('App\Entity\People', 'p')
+           ->join('p.orders', 'co')
+           ->join('co.books', 'b')
+           ->groupBy('p.id')
+           ->orderBy('total_spent', 'DESC')
+           ->setMaxResults(3);
         
-        $stmt = $conn->prepare($sql);
-        $result = $stmt->executeQuery();
-        $topCustomers = $result->fetchAllAssociative();
+        $topCustomers = $qb->getQuery()->getResult();
         
         return $this->render('book_store/top_3_customers.html.twig', [
             'top_customers' => $topCustomers
@@ -106,48 +98,40 @@ class BookStoreController extends AbstractController
     #[Route('/average-purchase', name: 'average_purchase')]
     public function averagePurchase(EntityManagerInterface $em): Response
     {
-        $conn = $em->getConnection();
+        $qb = $em->createQueryBuilder();
         
-        $sql = "
-            SELECT 
-                AVG(order_total) as average_amount
-            FROM (
-                SELECT 
-                    co.id,
-                    SUM(b.price) as order_total
-                FROM customer_order co
-                JOIN customer_order_book cob ON co.id = cob.customer_order_id
-                JOIN book b ON cob.book_id = b.id
-                GROUP BY co.id
-            ) as order_totals
-        ";
+        $qb->select('co.id', 'SUM(b.price) as order_total')
+           ->from('App\Entity\CustomerOrder', 'co')
+           ->join('co.books', 'b')
+           ->groupBy('co.id');
         
-        $stmt = $conn->prepare($sql);
-        $result = $stmt->executeQuery();
-        $average = $result->fetchAssociative();
+        $orderTotals = $qb->getQuery()->getResult();
+        
+        $average = 0;
+        if (!empty($orderTotals)) {
+            $totalSum = 0;
+            foreach ($orderTotals as $order) {
+                $totalSum += $order['order_total'];
+            }
+            $average = $totalSum / count($orderTotals);
+        }
         
         return $this->render('book_store/average_purchase.html.twig', [
-            'average' => $average['average_amount'] ?? 0
+            'average' => round($average, 2)
         ]);
     }
 
     #[Route('/most-expensive-book', name: 'most_expensive_book')]
     public function mostExpensiveBook(EntityManagerInterface $em): Response
     {
-        $conn = $em->getConnection();
+        $qb = $em->createQueryBuilder();
         
-        $sql = "
-            SELECT 
-                title,
-                price
-            FROM book
-            ORDER BY price DESC
-            LIMIT 1
-        ";
+        $qb->select('b')
+           ->from('App\Entity\Book', 'b')
+           ->orderBy('b.price', 'DESC')
+           ->setMaxResults(1);
         
-        $stmt = $conn->prepare($sql);
-        $result = $stmt->executeQuery();
-        $expensiveBook = $result->fetchAssociative();
+        $expensiveBook = $qb->getQuery()->getOneOrNullResult();
         
         return $this->render('book_store/most_expensive_book.html.twig', [
             'book' => $expensiveBook
